@@ -7,8 +7,11 @@ import com.example.authconsumer.domain.repository.AuthKeyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthKeyRepositoryImpl(
+@Singleton
+class AuthKeyRepositoryImpl @Inject constructor(
     private val remoteDataSource: AuthKeyRemoteDataSource
 ) : AuthKeyRepository {
 

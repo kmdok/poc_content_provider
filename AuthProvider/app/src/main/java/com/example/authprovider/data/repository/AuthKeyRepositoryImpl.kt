@@ -4,8 +4,11 @@ import com.example.authprovider.data.source.AuthKeyDataSource
 import com.example.authprovider.domain.model.AuthKey
 import com.example.authprovider.domain.repository.AuthKeyRepository
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthKeyRepositoryImpl(
+@Singleton
+class AuthKeyRepositoryImpl @Inject constructor(
     private val dataSource: AuthKeyDataSource
 ) : AuthKeyRepository {
 

@@ -1,8 +1,11 @@
 package com.example.authconsumer.data.source
 
 import com.example.authconsumer.domain.model.AuthKey
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MockAuthKeyDataSource : AuthKeyRemoteDataSource {
+@Singleton
+class MockAuthKeyDataSource @Inject constructor() : AuthKeyRemoteDataSource {
 
     override fun fetchAuthKeys(): List<AuthKey> {
         return emptyList()

@@ -5,8 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthKeyDataSource {
+@Singleton
+class AuthKeyDataSource @Inject constructor() {
 
     private val _authKeys = MutableStateFlow<List<AuthKey>>(emptyList())
     val authKeys: StateFlow<List<AuthKey>> = _authKeys.asStateFlow()

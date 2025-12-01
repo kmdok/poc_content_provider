@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import com.example.authconsumer.domain.model.AuthKey
 import com.example.authconsumer.domain.model.FetchResult
 import com.example.authconsumer.domain.repository.AuthKeyRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-class AuthKeyViewModel(
+@HiltViewModel
+class AuthKeyViewModel @Inject constructor(
     private val repository: AuthKeyRepository
 ) : ViewModel() {
 

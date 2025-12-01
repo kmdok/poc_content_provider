@@ -3,9 +3,12 @@ package com.example.authprovider.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import com.example.authprovider.domain.model.AuthKey
 import com.example.authprovider.domain.repository.AuthKeyRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-class AuthKeyViewModel(
+@HiltViewModel
+class AuthKeyViewModel @Inject constructor(
     private val repository: AuthKeyRepository
 ) : ViewModel() {
 
