@@ -57,4 +57,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Security & Serialization
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.gson)
 }
