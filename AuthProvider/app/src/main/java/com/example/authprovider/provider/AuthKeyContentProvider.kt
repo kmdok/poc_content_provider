@@ -16,8 +16,36 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 
+/**
+ * 認証キーを他アプリに提供するContentProvider
+ *
+ * 機能:
+ * - 認証キーをConsumerアプリに提供（読み取り専用）
+ * - 動的なアクセス制御（パッケージ名ベース）
+ * - 有効期限切れ時の自動再生成
+ *
+ * エンドポイント:
+ * - /authkeys     → 全キー取得（CODE_AUTHKEYS）
+ * - /authkeys/{id} → ID指定で取得（CODE_AUTHKEY_ID）
+ * - /current      → 有効キー取得、期限切れなら再生成（CODE_CURRENT）
+ *
+ * セキュリティ:
+ * - Binder.getCallingUid()で呼び出し元を特定
+ * - 許可リスト（AllowedAppsDataSource）でアクセス制御
+ * - 未許可アプリにはSecurityExceptionをスロー
+ *
+ * Hilt統合:
+ * - ContentProviderはHiltのコンストラクタインジェクションに非対応
+ * - @EntryPointパターンで依存性を取得
+ */
 class AuthKeyContentProvider : ContentProvider() {
 
+    /**
+     * Hilt EntryPoint定義
+     *
+     * ContentProviderはライフサイクルが特殊でコンストラクタインジェクション不可。
+     * EntryPointを使ってHiltのDIグラフから依存性を取得する。
+     */
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface AuthKeyContentProviderEntryPoint {
@@ -26,6 +54,7 @@ class AuthKeyContentProvider : ContentProvider() {
         fun getOrRefreshAuthKeyUseCase(): GetOrRefreshAuthKeyUseCase
     }
 
+    /** EntryPointへのアクセサ（遅延初期化） */
     private val entryPoint: AuthKeyContentProviderEntryPoint by lazy {
         EntryPointAccessors.fromApplication(
             context!!.applicationContext,
@@ -34,10 +63,14 @@ class AuthKeyContentProvider : ContentProvider() {
     }
 
     companion object {
-        private const val CODE_AUTHKEYS = 1
-        private const val CODE_AUTHKEY_ID = 2
-        private const val CODE_CURRENT = 3
+        // URIマッチング用コード
+        private const val CODE_AUTHKEYS = 1    // /authkeys
+        private const val CODE_AUTHKEY_ID = 2  // /authkeys/{id}
+        private const val CODE_CURRENT = 3     // /current
 
+        /**
+         * URIマッチャー: リクエストURIを解析してコードに変換
+         */
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
             addURI(AuthKeyContract.AUTHORITY, AuthKeyContract.PATH_AUTHKEYS, CODE_AUTHKEYS)
             addURI(AuthKeyContract.AUTHORITY, "${AuthKeyContract.PATH_AUTHKEYS}/*", CODE_AUTHKEY_ID)
@@ -47,6 +80,14 @@ class AuthKeyContentProvider : ContentProvider() {
 
     override fun onCreate(): Boolean = true
 
+    /**
+     * データ取得メソッド（読み取り専用）
+     *
+     * 処理フロー:
+     * 1. 呼び出し元パッケージの検証
+     * 2. URIに応じたデータ取得
+     * 3. Cursorとして結果を返却
+     */
     override fun query(
         uri: Uri,
         projection: Array<out String>?,
@@ -54,18 +95,22 @@ class AuthKeyContentProvider : ContentProvider() {
         selectionArgs: Array<out String>?,
         sortOrder: String?
     ): Cursor? {
+        // セキュリティチェック: 許可されたアプリかどうか検証
         validateCallingPackage()
 
         return when (uriMatcher.match(uri)) {
             CODE_CURRENT -> {
+                // /current: 有効なキーを取得（期限切れなら自動再生成）
                 val key = entryPoint.getOrRefreshAuthKeyUseCase()()
                 createCursor(listOf(key))
             }
             CODE_AUTHKEYS -> {
+                // /authkeys: 全キーを取得
                 val keys = entryPoint.authKeyRepository().getAllKeys()
                 createCursor(keys)
             }
             CODE_AUTHKEY_ID -> {
+                // /authkeys/{id}: ID指定で取得
                 val id = uri.lastPathSegment
                 val key = id?.let { entryPoint.authKeyRepository().getKeyById(it) }
                 if (key != null) {
@@ -78,10 +123,28 @@ class AuthKeyContentProvider : ContentProvider() {
         }
     }
 
+    /**
+     * 呼び出し元パッケージの検証
+     *
+     * 動的アクセス制御の実装:
+     * 1. Binder.getCallingUid()で呼び出し元のUIDを取得
+     * 2. PackageManagerでUIDからパッケージ名を逆引き
+     * 3. AllowedAppsDataSourceで許可リストと照合
+     *
+     * なぜAndroidManifestのpermissionを使わないのか:
+     * - 許可リストをリモートから動的に更新したい
+     * - アプリ更新なしで許可アプリを追加/削除したい
+     *
+     * @throws SecurityException 許可されていないパッケージからのアクセス時
+     */
     private fun validateCallingPackage() {
+        // 呼び出し元プロセスのUIDを取得
         val callingUid = Binder.getCallingUid()
+
+        // UIDからパッケージ名を取得（1つのUIDに複数パッケージの可能性あり）
         val packages = context!!.packageManager.getPackagesForUid(callingUid)
 
+        // いずれかのパッケージが許可リストに含まれているか確認
         val isAllowed = packages?.any { packageName ->
             entryPoint.allowedAppsDataSource().isPackageAllowed(packageName)
         } ?: false
@@ -92,7 +155,14 @@ class AuthKeyContentProvider : ContentProvider() {
         }
     }
 
+    /**
+     * AuthKeyリストからCursorを生成
+     *
+     * @param keys 認証キーリスト
+     * @return MatrixCursor（メモリ上のCursor実装）
+     */
     private fun createCursor(keys: List<AuthKey>): Cursor {
+        // 列定義
         val cursor = MatrixCursor(
             arrayOf(
                 AuthKeyContract.Columns.ID,
@@ -103,6 +173,7 @@ class AuthKeyContentProvider : ContentProvider() {
             )
         )
 
+        // 各キーを行として追加
         keys.forEach { key ->
             cursor.addRow(
                 arrayOf(
@@ -110,7 +181,7 @@ class AuthKeyContentProvider : ContentProvider() {
                     key.key,
                     key.createdAt,
                     key.expiresAt,
-                    if (key.isExpired) 1 else 0
+                    if (key.isExpired) 1 else 0  // Boolean → Int変換
                 )
             )
         }
@@ -118,6 +189,11 @@ class AuthKeyContentProvider : ContentProvider() {
         return cursor
     }
 
+    /**
+     * MIMEタイプを返す
+     * - dir: 複数行（/authkeys）
+     * - item: 単一行（/authkeys/{id}, /current）
+     */
     override fun getType(uri: Uri): String? {
         return when (uriMatcher.match(uri)) {
             CODE_AUTHKEYS -> "vnd.android.cursor.dir/vnd.${AuthKeyContract.AUTHORITY}.authkey"
@@ -127,6 +203,7 @@ class AuthKeyContentProvider : ContentProvider() {
         }
     }
 
+    // 以下のメソッドは読み取り専用のため非サポート
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         throw UnsupportedOperationException("Insert not supported")
     }

@@ -23,6 +23,25 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+/**
+ * 認証キー表示用カードコンポーネント
+ *
+ * Jetpack Composeで実装された再利用可能なUIコンポーネント。
+ *
+ * 表示内容:
+ * - キーID（先頭8文字）
+ * - 認証キー本体（モノスペースフォント）
+ * - 作成日時
+ * - 有効期限
+ * - 有効期限バッジ（Valid / Xmin left / EXPIRED）
+ *
+ * 視覚的フィードバック:
+ * - 有効: 通常カラー（surfaceVariant）
+ * - 期限切れ: 赤系カラー（errorContainer）
+ *
+ * @param authKey 表示する認証キー
+ * @param modifier 外部から適用するModifier
+ */
 @Composable
 fun AuthKeyItem(
     authKey: AuthKey,
@@ -30,10 +49,11 @@ fun AuthKeyItem(
 ) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
+    // 期限切れかどうかでカード背景色を変更
     val containerColor = if (authKey.isExpired) {
-        MaterialTheme.colorScheme.errorContainer
+        MaterialTheme.colorScheme.errorContainer  // 赤系（警告）
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surfaceVariant  // 通常
     }
 
     Card(
@@ -49,26 +69,31 @@ fun AuthKeyItem(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // 上段: ID と有効期限バッジ
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "ID: ${authKey.id.take(8)}...",
+                    text = "ID: ${authKey.id.take(8)}...",  // UUIDは長いので先頭8文字のみ表示
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 ExpirationBadge(authKey = authKey)
             }
+
+            // 中段: 認証キー本体
             Text(
                 text = authKey.key,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Monospace  // 等幅フォントで可読性向上
                 ),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis  // 長い場合は「...」で省略
             )
+
+            // 下段: 作成日時と有効期限
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -88,6 +113,19 @@ fun AuthKeyItem(
     }
 }
 
+/**
+ * 有効期限バッジコンポーネント
+ *
+ * 残り時間に応じて色分けして視覚的に状態を伝える。
+ *
+ * 色分けルール:
+ * - 緑（#4CAF50）: 30分以上 → "Valid"
+ * - 黄（#FFC107）: 5〜30分 → "Xmin left"
+ * - 橙（#FF9800）: 5分以下 → "Xmin left"（警告）
+ * - 赤（error）: 期限切れ → "EXPIRED"
+ *
+ * @param authKey 判定対象の認証キー
+ */
 @Composable
 private fun ExpirationBadge(authKey: AuthKey) {
     val (text, color) = if (authKey.isExpired) {
@@ -95,16 +133,16 @@ private fun ExpirationBadge(authKey: AuthKey) {
     } else {
         val remainingMinutes = TimeUnit.MILLISECONDS.toMinutes(authKey.remainingTimeMs)
         when {
-            remainingMinutes <= 5 -> "${remainingMinutes}min left" to Color(0xFFFF9800)
-            remainingMinutes <= 30 -> "${remainingMinutes}min left" to Color(0xFFFFC107)
-            else -> "Valid" to Color(0xFF4CAF50)
+            remainingMinutes <= 5 -> "${remainingMinutes}min left" to Color(0xFFFF9800)   // 橙: 5分以下
+            remainingMinutes <= 30 -> "${remainingMinutes}min left" to Color(0xFFFFC107)  // 黄: 30分以下
+            else -> "Valid" to Color(0xFF4CAF50)  // 緑: 30分以上
         }
     }
 
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold  // 太字で目立たせる
         ),
         color = color
     )

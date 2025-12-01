@@ -7,6 +7,19 @@ import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * AuthKeyRepositoryの実装クラス
+ *
+ * リポジトリパターンの実装:
+ * - ドメイン層のインターフェース（AuthKeyRepository）を実装
+ * - データソースへのアクセスをカプセル化
+ * - 将来的に複数のデータソース（ローカル/リモート）を統合可能
+ *
+ * 現在の構成:
+ * UseCase → Repository(この クラス) → DataSource → EncryptedSharedPreferences
+ *
+ * @param dataSource 認証キーデータソース（DIで注入）
+ */
 @Singleton
 class AuthKeyRepositoryImpl @Inject constructor(
     private val dataSource: AuthKeyDataSource
