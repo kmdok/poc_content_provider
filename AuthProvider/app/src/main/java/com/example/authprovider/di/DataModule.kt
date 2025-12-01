@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.authprovider.data.repository.AuthKeyRepositoryImpl
+import com.example.authprovider.data.source.AllowedAppsDataSource
 import com.example.authprovider.data.source.AuthKeyDataSource
 import com.example.authprovider.data.source.EncryptedAuthKeyDataSource
+import com.example.authprovider.data.source.MockAllowedAppsDataSource
 import com.example.authprovider.domain.repository.AuthKeyRepository
 import com.google.gson.Gson
 import dagger.Binds
@@ -32,6 +34,12 @@ abstract class DataModule {
     abstract fun bindAuthKeyDataSource(
         impl: EncryptedAuthKeyDataSource
     ): AuthKeyDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindAllowedAppsDataSource(
+        impl: MockAllowedAppsDataSource
+    ): AllowedAppsDataSource
 
     companion object {
         @Provides
