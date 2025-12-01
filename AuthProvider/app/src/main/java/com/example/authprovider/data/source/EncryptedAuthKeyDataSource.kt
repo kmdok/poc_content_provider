@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 /**
  * EncryptedSharedPreferencesを使用した認証キーデータソース
@@ -66,7 +67,7 @@ class EncryptedAuthKeyDataSource @Inject constructor(
     private fun saveAllKeys(keys: List<AuthKey>) {
         val json = gson.toJson(keys)
         // apply()で非同期書き込み（UIブロックしない）
-        sharedPreferences.edit().putString(KEY_AUTH_KEYS, json).apply()
+        sharedPreferences.edit { putString(KEY_AUTH_KEYS, json) }
         // メモリ上のリストも更新（StateFlow経由で監視者に通知）
         _authKeys.value = keys
     }
