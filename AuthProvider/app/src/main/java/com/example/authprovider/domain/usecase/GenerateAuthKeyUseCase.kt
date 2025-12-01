@@ -19,7 +19,7 @@ class GenerateAuthKeyUseCase @Inject constructor() {
     /**
      * 認証キーを生成する
      *
-     * @param expirationMs 有効期限（ミリ秒）。デフォルトは1時間
+     * @param expirationMs 有効期限（ミリ秒）。デフォルトは30秒
      * @return 生成された認証キー
      */
     operator fun invoke(expirationMs: Long = AuthKey.DEFAULT_EXPIRATION_MS): AuthKey {

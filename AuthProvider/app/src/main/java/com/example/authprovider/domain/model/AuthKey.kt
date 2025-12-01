@@ -18,8 +18,8 @@ data class AuthKey(
     val expiresAt: Long = System.currentTimeMillis() + DEFAULT_EXPIRATION_MS
 ) {
     companion object {
-        /** デフォルトの有効期限: 1時間（ミリ秒） */
-        const val DEFAULT_EXPIRATION_MS = 60 * 60 * 1000L
+        /** デフォルトの有効期限: 30秒（ミリ秒） */
+        const val DEFAULT_EXPIRATION_MS = 30 * 1000L
     }
 
     /**
