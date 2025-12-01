@@ -37,7 +37,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Auth Provider") },
+                title = { Text("認証キー Provider") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -61,18 +61,18 @@ fun MainScreen(
                     onClick = { viewModel.generateNewKey() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Generate Key")
+                    Text("キー生成")
                 }
                 OutlinedButton(
                     onClick = { viewModel.clearAllKeys() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Clear All")
+                    Text("全削除")
                 }
             }
 
             Text(
-                text = "Generated Keys (${authKeys.size})",
+                text = "生成済みキー (${authKeys.size})",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -81,7 +81,7 @@ fun MainScreen(
 
             if (authKeys.isEmpty()) {
                 Text(
-                    text = "No keys generated yet",
+                    text = "キーがまだ生成されていません",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)

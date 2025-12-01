@@ -63,7 +63,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Auth Consumer") },
+                title = { Text("認証キー Consumer") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -92,14 +92,14 @@ fun MainScreen(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Get Current Key")
+                    Text("有効キー取得")
                 }
                 // 補助アクション: 全キー一覧を取得
                 OutlinedButton(
                     onClick = { viewModel.fetchAuthKeys() },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Fetch All Keys")
+                    Text("全キー取得")
                 }
             }
 
@@ -136,7 +136,7 @@ private fun CurrentKeySection(currentKeyResult: FetchResult<AuthKey?>) {
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            text = "Current Valid Key",
+            text = "現在有効なキー",
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -147,7 +147,7 @@ private fun CurrentKeySection(currentKeyResult: FetchResult<AuthKey?>) {
             is FetchResult.Idle -> {
                 // 初期状態: 操作ガイド
                 Text(
-                    text = "Tap 'Get Current Key' to fetch",
+                    text = "「有効キー取得」をタップ",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -163,7 +163,7 @@ private fun CurrentKeySection(currentKeyResult: FetchResult<AuthKey?>) {
                         modifier = Modifier.height(16.dp)
                     )
                     Text(
-                        text = "Fetching current key...",
+                        text = "取得中...",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -176,7 +176,7 @@ private fun CurrentKeySection(currentKeyResult: FetchResult<AuthKey?>) {
                     AuthKeyItem(authKey = key)
                 } else {
                     Text(
-                        text = "No valid key available",
+                        text = "有効なキーがありません",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +186,7 @@ private fun CurrentKeySection(currentKeyResult: FetchResult<AuthKey?>) {
             is FetchResult.Error -> {
                 // エラー: 赤字でメッセージ表示
                 Text(
-                    text = "Error: ${currentKeyResult.message}",
+                    text = "エラー: ${currentKeyResult.message}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -213,7 +213,7 @@ private fun AllKeysSection(fetchResult: FetchResult<List<AuthKey>>) {
         modifier = Modifier.fillMaxSize()
     ) {
         Text(
-            text = "All Keys",
+            text = "全キー一覧",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -228,7 +228,7 @@ private fun AllKeysSection(fetchResult: FetchResult<List<AuthKey>>) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Tap 'Fetch All Keys' to load all keys",
+                        text = "「全キー取得」をタップ",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -249,7 +249,7 @@ private fun AllKeysSection(fetchResult: FetchResult<List<AuthKey>>) {
                 if (fetchResult.data.isEmpty()) {
                     // 空の場合
                     Text(
-                        text = "No keys available from provider",
+                        text = "Providerにキーがありません",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp)
@@ -257,7 +257,7 @@ private fun AllKeysSection(fetchResult: FetchResult<List<AuthKey>>) {
                 } else {
                     // キー一覧表示
                     Text(
-                        text = "Found ${fetchResult.data.size} key(s)",
+                        text = "${fetchResult.data.size} 件のキー",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -283,7 +283,7 @@ private fun AllKeysSection(fetchResult: FetchResult<List<AuthKey>>) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Error: ${fetchResult.message}",
+                        text = "エラー: ${fetchResult.message}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )

@@ -10,6 +10,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,29 +23,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.authconsumer.domain.model.AuthKey
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /**
  * 認証キー表示用カードコンポーネント
  *
- * Jetpack Composeで実装された再利用可能なUIコンポーネント。
- *
- * 表示内容:
- * - キーID（先頭8文字）
- * - 認証キー本体（モノスペースフォント）
- * - 作成日時
- * - 有効期限
- * - 有効期限バッジ（Valid / Xmin left / EXPIRED）
- *
- * 視覚的フィードバック:
- * - 有効: 通常カラー（surfaceVariant）
- * - 期限切れ: 赤系カラー（errorContainer）
- *
- * @param authKey 表示する認証キー
- * @param modifier 外部から適用するModifier
+ * 残り時間はリアルタイム（1秒ごと）で更新される。
  */
 @Composable
 fun AuthKeyItem(
@@ -49,8 +40,23 @@ fun AuthKeyItem(
 ) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
+    // 残り時間をリアルタイムで更新するための状態
+    var currentTimeMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // 1秒ごとに現在時刻を更新
+    LaunchedEffect(authKey.id) {
+        while (true) {
+            delay(1000L)
+            currentTimeMs = System.currentTimeMillis()
+        }
+    }
+
+    // 現在の残り時間を計算
+    val remainingMs = (authKey.expiresAt - currentTimeMs).coerceAtLeast(0)
+    val isExpired = currentTimeMs > authKey.expiresAt
+
     // 期限切れかどうかでカード背景色を変更
-    val containerColor = if (authKey.isExpired) {
+    val containerColor = if (isExpired) {
         MaterialTheme.colorScheme.errorContainer  // 赤系（警告）
     } else {
         MaterialTheme.colorScheme.surfaceVariant  // 通常
@@ -80,7 +86,8 @@ fun AuthKeyItem(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                ExpirationBadge(authKey = authKey)
+                // 残り時間バッジ（秒単位でリアルタイム更新）
+                ExpirationBadge(remainingMs = remainingMs, isExpired = isExpired)
             }
 
             // 中段: 認証キー本体
@@ -99,12 +106,12 @@ fun AuthKeyItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Created: ${dateFormat.format(Date(authKey.createdAt))}",
+                    text = "作成: ${dateFormat.format(Date(authKey.createdAt))}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Expires: ${dateFormat.format(Date(authKey.expiresAt))}",
+                    text = "期限: ${dateFormat.format(Date(authKey.expiresAt))}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -114,28 +121,29 @@ fun AuthKeyItem(
 }
 
 /**
- * 有効期限バッジコンポーネント
+ * 有効期限バッジコンポーネント（秒単位でリアルタイム更新）
  *
  * 残り時間に応じて色分けして視覚的に状態を伝える。
  *
  * 色分けルール:
- * - 緑（#4CAF50）: 30分以上 → "Valid"
- * - 黄（#FFC107）: 5〜30分 → "Xmin left"
- * - 橙（#FF9800）: 5分以下 → "Xmin left"（警告）
- * - 赤（error）: 期限切れ → "EXPIRED"
- *
- * @param authKey 判定対象の認証キー
+ * - 緑（#4CAF50）: 20秒以上
+ * - 黄（#FFC107）: 10〜20秒
+ * - 橙（#FF9800）: 5〜10秒
+ * - 赤橙（#FF5722）: 5秒以下
+ * - 赤（error）: 期限切れ
  */
 @Composable
-private fun ExpirationBadge(authKey: AuthKey) {
-    val (text, color) = if (authKey.isExpired) {
-        "EXPIRED" to MaterialTheme.colorScheme.error
+private fun ExpirationBadge(remainingMs: Long, isExpired: Boolean) {
+    val remainingSeconds = remainingMs / 1000
+
+    val (text, color) = if (isExpired) {
+        "期限切れ" to MaterialTheme.colorScheme.error
     } else {
-        val remainingMinutes = TimeUnit.MILLISECONDS.toMinutes(authKey.remainingTimeMs)
-        when {
-            remainingMinutes <= 5 -> "${remainingMinutes}min left" to Color(0xFFFF9800)   // 橙: 5分以下
-            remainingMinutes <= 30 -> "${remainingMinutes}min left" to Color(0xFFFFC107)  // 黄: 30分以下
-            else -> "Valid" to Color(0xFF4CAF50)  // 緑: 30分以上
+        "残り: ${remainingSeconds}秒" to when {
+            remainingSeconds <= 5 -> Color(0xFFFF5722)   // 赤橙: 5秒以下
+            remainingSeconds <= 10 -> Color(0xFFFF9800)  // 橙: 10秒以下
+            remainingSeconds <= 20 -> Color(0xFFFFC107)  // 黄: 20秒以下
+            else -> Color(0xFF4CAF50)                    // 緑: 20秒以上
         }
     }
 
