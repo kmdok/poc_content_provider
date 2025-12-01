@@ -19,6 +19,14 @@ class AuthKeyRepositoryImpl @Inject constructor(
         return dataSource.generateNewKey()
     }
 
+    override fun saveKey(authKey: AuthKey) {
+        dataSource.saveKey(authKey)
+    }
+
+    override fun getCurrentKey(): AuthKey? {
+        return dataSource.getCurrentKey()
+    }
+
     override fun getKeyById(id: String): AuthKey? {
         return dataSource.getKeyById(id)
     }
@@ -29,6 +37,10 @@ class AuthKeyRepositoryImpl @Inject constructor(
 
     override fun deleteKey(id: String): Boolean {
         return dataSource.deleteKey(id)
+    }
+
+    override fun deleteExpiredKeys() {
+        dataSource.deleteExpiredKeys()
     }
 
     override fun clearAllKeys() {

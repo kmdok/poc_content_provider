@@ -6,8 +6,11 @@ import kotlinx.coroutines.flow.StateFlow
 interface AuthKeyRepository {
     val authKeys: StateFlow<List<AuthKey>>
     fun generateNewKey(): AuthKey
+    fun saveKey(authKey: AuthKey)
+    fun getCurrentKey(): AuthKey?
     fun getKeyById(id: String): AuthKey?
     fun getAllKeys(): List<AuthKey>
     fun deleteKey(id: String): Boolean
+    fun deleteExpiredKeys()
     fun clearAllKeys()
 }
