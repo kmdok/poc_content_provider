@@ -7,11 +7,15 @@ import javax.inject.Singleton
 @Singleton
 class MockAuthKeyDataSource @Inject constructor() : AuthKeyRemoteDataSource {
 
-    override fun fetchAuthKeys(): List<AuthKey> {
+    override suspend fun fetchAuthKeys(): List<AuthKey> {
         return emptyList()
     }
 
-    override fun fetchAuthKeyById(id: String): AuthKey? {
+    override suspend fun fetchCurrentValidKey(): AuthKey? {
+        return null
+    }
+
+    override suspend fun fetchAuthKeyById(id: String): AuthKey? {
         return null
     }
 }

@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface AuthKeyRepository {
     val fetchResult: StateFlow<FetchResult<List<AuthKey>>>
-    fun fetchAuthKeys()
-    fun fetchAuthKeyById(id: String): AuthKey?
+    val currentKeyResult: StateFlow<FetchResult<AuthKey?>>
+    suspend fun fetchAuthKeys()
+    suspend fun fetchCurrentValidKey()
+    suspend fun fetchAuthKeyById(id: String): AuthKey?
 }

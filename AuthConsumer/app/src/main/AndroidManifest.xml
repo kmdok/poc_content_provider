@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required for Android 11+ to query ContentProvider from another app -->
+    <queries>
+        <package android:name="com.example.authprovider" />
+    </queries>
+
     <application
         android:name=".AuthConsumerApplication"
         android:allowBackup="true"
